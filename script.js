@@ -31,7 +31,16 @@ processBtn.addEventListener("click", () => {
   })
     .then(({ data: { text } }) => {
       ocrText = text.trim();
-      textOutput.textContent = ocrText || "Metin bulunamadı.";
+
+      // Filtreleme: sadece "sayı - cevap harfi" formatındaki bölümleri al
+      const cevaplar = ocrText.match(/\d+\s*[-\.]?\s*[A-E]/gi);
+      if (cevaplar && cevaplar.length > 0) {
+        ocrText = cevaplar.join(" ");
+      } else {
+        ocrText = "Cevap anahtarı formatında metin bulunamadı.";
+      }
+
+      textOutput.textContent = ocrText;
       processBtn.disabled = false;
       playBtn.disabled = false;
     })
@@ -50,8 +59,6 @@ playBtn.addEventListener("click", () => {
   let textToRead = textOutput.textContent.trim();
   if (!textToRead) return;
 
-  // Metni basitçe cümlelere veya boşluklara böl
-  // İstersen daha gelişmiş ayrıştırma yapabiliriz
   const utterance = new SpeechSynthesisUtterance(textToRead);
   utterance.rate = parseFloat(speedRange.value);
   window.speechSynthesis.cancel(); // varsa öncekini durdur
