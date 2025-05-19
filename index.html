@@ -1,35 +1,45 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Cevap Anahtarı OCR</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>YDT Deneme Cevap Okuma - Tesseract.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body>
-  <h1>Cevap Anahtarı Okuyucu</h1>
+  <h1>YDT Deneme Cevap Anahtarı Okuma</h1>
 
-  <input type="file" id="imageInput" accept="image/*">
+  <input type="file" id="imageInput" accept="image/*" />
+  <button id="btnProcess" disabled>OCR & Okuma Başlat</button>
 
-  <label for="lessonSelect">Ders Seç:</label>
-  <select id="lessonSelect">
-    <option value="TÜRKÇE">TÜRKÇE</option>
-    <option value="TEMEL MATEMATİK">TEMEL MATEMATİK</option>
-    <option value="FEN BİLİMLERİ">FEN BİLİMLERİ</option>
-    <option value="SOSYAL BİLİMLER">SOSYAL BİLİMLER</option>
-  </select>
+  <pre id="outputText" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; margin-top: 20px;"></pre>
 
-  <button id="processBtn" disabled>OCR Başlat</button>
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const btnProcess = document.getElementById('btnProcess');
+    const outputText = document.getElementById('outputText');
+    let ocrResult = '';
 
-  <h3>OCR Çıktısı:</h3>
-  <pre id="textOutput">Henüz bir çıktı yok.</pre>
+    imageInput.addEventListener('change', () => {
+      btnProcess.disabled = !imageInput.files.length;
+    });
 
-  <label for="speedRange">Okuma Hızı:</label>
-  <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1">
-  <span id="speedValue">1</span>x
+    btnProcess.addEventListener('click', () => {
+      if (!imageInput.files.length) return;
 
-  <button id="playBtn" disabled>Oku</button>
+      outputText.textContent = 'OCR işlemi yapılıyor, lütfen bekleyin...';
 
-  <script src="script.js"></script>
+      Tesseract.recognize(
+        imageInput.files[0],
+        'tur', // Türkçe dil paketi
+        { logger: m => console.log(m) }
+      ).then(({ data: { text } }) => {
+        ocrResult = text;
+        outputText.textContent = 'OCR Sonucu:\n\n' + ocrResult;
+        // Burada sesli okuma kodu sonraki adımda olacak
+      }).catch(err => {
+        outputText.textContent = 'OCR sırasında hata: ' + err.message;
+      });
+    });
+  </script>
 </body>
 </html>
