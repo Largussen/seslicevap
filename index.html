@@ -1,56 +1,20 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sesli Cevap Anahtarı OCR</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      color: #222;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-    }
-    #outputText {
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      background-color: #fff;
-      color: #222;
-      padding: 15px;
-      height: 300px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      font-family: monospace;
-    }
-    button {
-      margin-left: 10px;
-      padding: 7px 15px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    input[type="file"] {
-      font-size: 16px;
-    }
-    #canvas {
-      display: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sesli Cevap</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  #outputText { white-space: pre-wrap; margin-top: 15px; }
+  button:disabled { opacity: 0.5; }
+</style>
 </head>
 <body>
-
-  <h1>Sesli Cevap Anahtarı OCR</h1>
-
+  <h1>Cevap Anahtarı OCR</h1>
   <input type="file" id="imageInput" accept="image/*" />
   <button id="btnProcess" disabled>OCR ve Oku</button>
-
-  <div id="outputText">Burada OCR sonucu gösterilecek...</div>
-
-  <canvas id="canvas"></canvas>
-
+  <div id="outputText"></div>
   <script src="script.js"></script>
 </body>
 </html>
