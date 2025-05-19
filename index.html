@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cevap Anahtarı Okuyucu</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <h1>Cevap Anahtarı Okuyucu</h1>
+
+  <input type="file" id="imageInput" accept="image/*" />
+  <button id="processBtn" disabled>OCR ile Metni Çıkart</button>
+
+  <div id="textOutput" contenteditable="true" spellcheck="false" placeholder="OCR sonucu burada gözükecek..."></div>
+
+  <label for="speedRange">Okuma Hızı:</label>
+  <input type="range" id="speedRange" min="0.5" max="2" step="0.1" value="1" />
+  <span id="speedValue">1</span>x
+
+  <button id="playBtn" disabled>Oynat</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
