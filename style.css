@@ -1,33 +1,50 @@
 body {
   font-family: Arial, sans-serif;
-  max-width: 600px;
-  margin: 30px auto;
+  padding: 20px;
+  max-width: 800px;
+  margin: auto;
+  background-color: #f9f9f9;
+}
+
+h1 {
+  color: #333;
   text-align: center;
 }
 
-#textOutput {
-  margin-top: 20px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  min-height: 100px;
-  white-space: pre-wrap;
-  font-family: monospace;
-  background: #f9f9f9;
-  outline: none;
+input[type="file"],
+select,
+button,
+input[type="range"] {
+  display: block;
+  margin: 10px 0;
+  padding: 8px;
+  font-size: 16px;
 }
 
-button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  font-size: 1rem;
+pre {
+  background-color: #eee;
+  padding: 10px;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#playBtn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
   cursor: pointer;
 }
 
-input[type="range"] {
-  vertical-align: middle;
+#processBtn {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
-label {
-  margin-left: 10px;
-  font-weight: bold;
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
