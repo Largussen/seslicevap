@@ -4,15 +4,12 @@ const textOutput = document.getElementById("textOutput");
 const playBtn = document.getElementById("playBtn");
 const speedRange = document.getElementById("speedRange");
 const speedValue = document.getElementById("speedValue");
+const lessonSelect = document.getElementById("lessonSelect");
 
-let ocrText = "";
+let filteredAnswers = "";
 
 imageInput.addEventListener("change", () => {
-  if (imageInput.files.length > 0) {
-    processBtn.disabled = false;
-  } else {
-    processBtn.disabled = true;
-  }
+  processBtn.disabled = imageInput.files.length === 0;
 });
 
 processBtn.addEventListener("click", () => {
@@ -25,24 +22,15 @@ processBtn.addEventListener("click", () => {
   const file = imageInput.files[0];
 
   Tesseract.recognize(file, "tur", {
-    logger: m => {
-      // console.log(m);
-    }
+    logger: m => {}
   })
     .then(({ data: { text } }) => {
-      ocrText = text.trim();
-
-      // Filtreleme: sadece "sayı - cevap harfi" formatındaki bölümleri al
-      const cevaplar = ocrText.match(/\d+\s*[-\.]?\s*[A-E]/gi);
-      if (cevaplar && cevaplar.length > 0) {
-        ocrText = cevaplar.join(" ");
-      } else {
-        ocrText = "Cevap anahtarı formatında metin bulunamadı.";
-      }
-
-      textOutput.textContent = ocrText;
+      const cleanedText = text.replace(/\s+/g, ' ');
+      const selectedLesson = lessonSelect.value.toUpperCase();
+      filteredAnswers = extractLessonAnswers(cleanedText, selectedLesson);
+      textOutput.textContent = filteredAnswers || "Seçilen derse ait cevaplar bulunamadı.";
       processBtn.disabled = false;
-      playBtn.disabled = false;
+      playBtn.disabled = filteredAnswers.length === 0;
     })
     .catch(err => {
       textOutput.textContent = "OCR sırasında hata oluştu: " + err.message;
@@ -56,11 +44,20 @@ speedRange.addEventListener("input", () => {
 });
 
 playBtn.addEventListener("click", () => {
-  let textToRead = textOutput.textContent.trim();
-  if (!textToRead) return;
-
-  const utterance = new SpeechSynthesisUtterance(textToRead);
+  if (!filteredAnswers) return;
+  const utterance = new SpeechSynthesisUtterance(filteredAnswers);
   utterance.rate = parseFloat(speedRange.value);
-  window.speechSynthesis.cancel(); // varsa öncekini durdur
+  window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 });
+
+// Cevapları ayıklayan fonksiyon
+function extractLessonAnswers(text, lessonTitle) {
+  const pattern = new RegExp(`${lessonTitle}\\s*([\\s\\S]+?)(?=(TÜRKÇE|TEMEL MATEMATİK|FEN BİLİMLERİ|SOSYAL BİLİMLERİ|$))`, "i");
+  const match = text.match(pattern);
+  if (!match) return "";
+
+  const answersRaw = match[1];
+  const answers = answersRaw.match(/\d+\s*[-–]?\s*[A-Eİ]/gi); // sadece cevapları al
+  return answers ? answers.join(" ") : "";
+}
