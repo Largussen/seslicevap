@@ -5,25 +5,23 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let ocrResult = '';
 
-const API_KEY = 'K83815295788957'; // OCR.space API anahtarını buraya ekle
+const API_KEY = 'K83815295788957'; // OCR.space API key
 
 imageInput.addEventListener('change', () => {
   btnProcess.disabled = !imageInput.files.length;
 });
 
 // Görseli kontrast ve parlaklık artırmak için işleme
-function preprocessImage(image, callback) {
+function preprocessImage(imageDataURL, callback) {
   const img = new Image();
   img.onload = () => {
     canvas.width = img.width;
     canvas.height = img.height;
-
     ctx.drawImage(img, 0, 0);
 
     let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     let data = imgData.data;
 
-    // Kontrast ve parlaklık ayarı, gri tonlama
     const contrast = 1.2;
     const brightness = 15;
     for (let i = 0; i < data.length; i += 4) {
@@ -34,19 +32,20 @@ function preprocessImage(image, callback) {
     }
 
     ctx.putImageData(imgData, 0, 0);
-    callback(canvas.toDataURL());
+    const finalBase64 = canvas.toDataURL('image/png'); // PNG formatında base64 üret
+    callback(finalBase64);
   };
-  img.src = image;
+  img.src = imageDataURL;
 }
 
 // OCR sonrası temizleme ve parse işlemi
 function cleanAndParseAnswers(rawText) {
-  rawText = rawText.replace(/5ST/gi, '51');
-  rawText = rawText.replace(/71\..?B/gi, '71 B');
-  rawText = rawText.replace(/2200/gi, '22 00');
-  rawText = rawText.replace(/4T/gi, '47');
-  rawText = rawText.replace(/[|l]/g, '1');
-  rawText = rawText.replace(/[,;]/g, ' ');
+  rawText = rawText.replace(/5ST/gi, '51')
+                   .replace(/71\..?B/gi, '71 B')
+                   .replace(/2200/gi, '22 00')
+                   .replace(/4T/gi, '47')
+                   .replace(/[|l]/g, '1')
+                   .replace(/[,;]/g, ' ');
 
   const regex = /(\d{1,2})\s*[-.\s]?\s*([ABCDEF])/gi;
   const matches = [];
@@ -55,13 +54,13 @@ function cleanAndParseAnswers(rawText) {
   while ((match = regex.exec(rawText)) !== null) {
     let question = parseInt(match[1]);
     if (question >= 1 && question <= 80) {
-      matches.push({ question: question, answer: match[2].toUpperCase() });
+      matches.push({ question, answer: match[2].toUpperCase() });
     }
   }
   return matches;
 }
 
-// Cevapları sesli okuma
+// Sesli okuma
 function readAnswersSequentially(answers) {
   if (!answers.length) {
     alert('Cevap bulunamadı!');
@@ -69,10 +68,7 @@ function readAnswersSequentially(answers) {
   }
   let index = 0;
   function speakNext() {
-    if (index >= answers.length) {
-      console.log('Okuma tamamlandı.');
-      return;
-    }
+    if (index >= answers.length) return;
     const item = answers[index];
     const utterance = new SpeechSynthesisUtterance(`Soru ${item.question}, cevap ${item.answer}`);
     utterance.lang = 'tr-TR';
@@ -85,6 +81,7 @@ function readAnswersSequentially(answers) {
   speakNext();
 }
 
+// OCR işlemini başlat
 btnProcess.addEventListener('click', () => {
   if (!imageInput.files.length) return;
 
@@ -94,10 +91,10 @@ btnProcess.addEventListener('click', () => {
   const reader = new FileReader();
 
   reader.onload = e => {
-    const imgDataUrl = e.target.result; // data:image/png;base64,...
+    const base64Data = e.target.result; // data:image/png;base64,...
 
-    preprocessImage(imgDataUrl, processedImage => {
-      outputText.textContent = 'OCR işlemi yapılıyor, lütfen bekleyin...';
+    preprocessImage(base64Data, processedImage => {
+      outputText.textContent = 'OCR işlemi yapılıyor...';
 
       fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
@@ -105,23 +102,24 @@ btnProcess.addEventListener('click', () => {
           apikey: API_KEY,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `base64Image=${encodeURIComponent(processedImage)}&language=tur&isOverlayRequired=false`,
+        body: `base64Image=${encodeURIComponent(processedImage)}&language=tur&isOverlayRequired=false`
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.IsErroredOnProcessing) {
-          outputText.textContent = 'OCR Hatası: ' + data.ErrorMessage.join(' ');
-          return;
-        }
-        ocrResult = data.ParsedResults[0].ParsedText;
-        outputText.textContent = 'OCR Sonucu:\n\n' + ocrResult;
+        .then(res => res.json())
+        .then(data => {
+          if (data.IsErroredOnProcessing) {
+            outputText.textContent = 'OCR Hatası: ' + data.ErrorMessage.join(' ');
+            return;
+          }
 
-        const answers = cleanAndParseAnswers(ocrResult);
-        readAnswersSequentially(answers);
-      })
-      .catch(err => {
-        outputText.textContent = 'API Hatası: ' + err.message;
-      });
+          ocrResult = data.ParsedResults[0].ParsedText;
+          outputText.textContent = 'OCR Sonucu:\n\n' + ocrResult;
+
+          const answers = cleanAndParseAnswers(ocrResult);
+          readAnswersSequentially(answers);
+        })
+        .catch(err => {
+          outputText.textContent = 'API Hatası: ' + err.message;
+        });
     });
   };
 
