@@ -5,7 +5,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let ocrResult = '';
 
-const API_KEY = 'BURAYA_SENIN_OCR_SPACE_API_ANAHTARINI_YAZ'; // OCR.space API anahtarını buraya ekle
+const API_KEY = 'K83815295788957'; // OCR.space API anahtarını buraya ekle
 
 imageInput.addEventListener('change', () => {
   btnProcess.disabled = !imageInput.files.length;
