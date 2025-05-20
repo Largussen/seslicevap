@@ -1,18 +1,50 @@
-const API_KEY = 'K83815295788957'; 
-
 const imageInput = document.getElementById('imageInput');
 const btnProcess = document.getElementById('btnProcess');
 const outputText = document.getElementById('outputText');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let ocrResult = '';
+
+const API_KEY = 'BURAYA_SENIN_OCR_SPACE_API_ANAHTARINI_YAZ'; // OCR.space API anahtarını buraya ekle
 
 imageInput.addEventListener('change', () => {
   btnProcess.disabled = !imageInput.files.length;
 });
 
+// Görseli kontrast ve parlaklık artırmak için işleme
+function preprocessImage(image, callback) {
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    ctx.drawImage(img, 0, 0);
+
+    let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imgData.data;
+
+    // Kontrast ve parlaklık ayarı, gri tonlama
+    const contrast = 1.2;
+    const brightness = 15;
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      let newColor = contrast * (avg - 128) + 128 + brightness;
+      newColor = Math.min(255, Math.max(0, newColor));
+      data[i] = data[i + 1] = data[i + 2] = newColor;
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    callback(canvas.toDataURL());
+  };
+  img.src = image;
+}
+
+// OCR sonrası temizleme ve parse işlemi
 function cleanAndParseAnswers(rawText) {
   rawText = rawText.replace(/5ST/gi, '51');
-  rawText = rawText.replace(/71\..B/gi, '71 B');
-  rawText = rawText.replace(/22-0/gi, '22 0');
-  rawText = rawText.replace(/4AT/gi, '47');
+  rawText = rawText.replace(/71\..?B/gi, '71 B');
+  rawText = rawText.replace(/2200/gi, '22 00');
+  rawText = rawText.replace(/4T/gi, '47');
   rawText = rawText.replace(/[|l]/g, '1');
   rawText = rawText.replace(/[,;]/g, ' ');
 
@@ -29,6 +61,7 @@ function cleanAndParseAnswers(rawText) {
   return matches;
 }
 
+// Cevapları sesli okuma
 function readAnswersSequentially(answers) {
   if (!answers.length) {
     alert('Cevap bulunamadı!');
@@ -59,32 +92,38 @@ btnProcess.addEventListener('click', () => {
 
   const file = imageInput.files[0];
   const reader = new FileReader();
-  reader.onload = e => {
-    const base64img = e.target.result.split(',')[1]; // sadece base64 kısmı
 
-    fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
-      headers: {
-        apikey: API_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `base64Image=data:image/png;base64,${base64img}&language=tur&isOverlayRequired=false`,
-    })
+  reader.onload = e => {
+    const imgDataUrl = e.target.result; // data:image/png;base64,...
+
+    preprocessImage(imgDataUrl, processedImage => {
+      outputText.textContent = 'OCR işlemi yapılıyor, lütfen bekleyin...';
+
+      fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        headers: {
+          apikey: API_KEY,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `base64Image=${encodeURIComponent(processedImage)}&language=tur&isOverlayRequired=false`,
+      })
       .then(res => res.json())
       .then(data => {
         if (data.IsErroredOnProcessing) {
           outputText.textContent = 'OCR Hatası: ' + data.ErrorMessage.join(' ');
           return;
         }
-        const text = data.ParsedResults[0].ParsedText;
-        outputText.textContent = 'OCR Sonucu:\n\n' + text;
+        ocrResult = data.ParsedResults[0].ParsedText;
+        outputText.textContent = 'OCR Sonucu:\n\n' + ocrResult;
 
-        const answers = cleanAndParseAnswers(text);
+        const answers = cleanAndParseAnswers(ocrResult);
         readAnswersSequentially(answers);
       })
       .catch(err => {
         outputText.textContent = 'API Hatası: ' + err.message;
       });
+    });
   };
+
   reader.readAsDataURL(file);
 });
