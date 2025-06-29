@@ -5,13 +5,13 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let ocrResult = '';
 
-const API_KEY = 'K83815295788957'; // OCR.space API key
+const API_KEY = 'K83815295788957'; 
 
 imageInput.addEventListener('change', () => {
   btnProcess.disabled = !imageInput.files.length;
 });
 
-// Görseli kontrast ve parlaklık artırmak için işleme
+
 function preprocessImage(imageDataURL, callback) {
   const img = new Image();
   img.onload = () => {
@@ -32,13 +32,13 @@ function preprocessImage(imageDataURL, callback) {
     }
 
     ctx.putImageData(imgData, 0, 0);
-    const finalBase64 = canvas.toDataURL('image/png'); // PNG formatında base64 üret
+    const finalBase64 = canvas.toDataURL('image/png'); 
     callback(finalBase64);
   };
   img.src = imageDataURL;
 }
 
-// OCR sonrası temizleme ve parse işlemi
+
 function cleanAndParseAnswers(rawText) {
   rawText = rawText.replace(/5ST/gi, '51')
                    .replace(/71\..?B/gi, '71 B')
@@ -60,7 +60,7 @@ function cleanAndParseAnswers(rawText) {
   return matches;
 }
 
-// Sesli okuma
+
 function readAnswersSequentially(answers) {
   if (!answers.length) {
     alert('Cevap bulunamadı!');
@@ -81,7 +81,7 @@ function readAnswersSequentially(answers) {
   speakNext();
 }
 
-// OCR işlemini başlat
+
 btnProcess.addEventListener('click', () => {
   if (!imageInput.files.length) return;
 
@@ -91,7 +91,7 @@ btnProcess.addEventListener('click', () => {
   const reader = new FileReader();
 
   reader.onload = e => {
-    const base64Data = e.target.result; // data:image/png;base64,...
+    const base64Data = e.target.result; 
 
     preprocessImage(base64Data, processedImage => {
       outputText.textContent = 'OCR işlemi yapılıyor...';
